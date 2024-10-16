@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ToDoListView: View {
+    @State private var sheetIsPresented = false
     var toDos = ["Learn Swift",
                  "Build Apps",
                  "Change the World",
@@ -19,10 +20,11 @@ struct ToDoListView: View {
             List {
                 ForEach(toDos, id: \.self) { toDo in
                     NavigationLink {
-                        DetailView(passedValue:(toDo))
+                        DetailView(toDo:toDo)
                     } label: {
                         Text("Item \(toDo)")
                     }
+                    .font(.title2)
                     
                 }
                 
@@ -30,6 +32,21 @@ struct ToDoListView: View {
             .navigationTitle("ToDo List")
             .navigationBarTitleDisplayMode(.automatic)
             .listStyle(.plain)
+            .sheet(isPresented: $sheetIsPresented) {
+                NavigationStack {
+                    DetailView(toDo: "")
+                }
+            }
+            .toolbar{
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        sheetIsPresented.toggle()
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+
+                }
+            }
         }
     }
 }
