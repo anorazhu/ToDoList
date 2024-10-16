@@ -6,22 +6,25 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct DetailView: View {
-    //When a child view has a variable that is declared, but not initialized, swiftui expects a value to be passed in from the view's parent
-    //private restricts the use of a value to the area where it is declared, we dont want to declare private because we want to pass in the value from a different file
-    @State var toDo: String
+    @State var toDo: ToDo
+    @State private var item = ""
     @State private var reminderIsOn = false
     //@State private var dueDate = Date.now + 60*60*24
     @State private var dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Date.now)!
     @State private var notes = ""
     @State private var isCompleted = false
     
+    @Environment(\.modelContext) var modelContext
+    
     @Environment(\.dismiss) private var dismiss
+    
     
     var body: some View {
         List {
-            TextField("Enter To Do here", text: $toDo)
+            TextField("Enter To Do here", text: $item)
                 .font(.title)
                 .textFieldStyle(.roundedBorder)
                 .padding(.vertical)
@@ -48,6 +51,13 @@ struct DetailView: View {
             
         }
         .listStyle(.plain)
+        .onAppear() {
+            item = toDo.item
+            reminderIsOn = toDo.reminderIsOn
+            dueDate = toDo.dueDate
+            notes = toDo.notes
+            isCompleted = toDo.isCompleted
+        }
         .navigationBarBackButtonHidden()
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -58,7 +68,18 @@ struct DetailView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") {
-                    //TODO: Add save code here
+                    //Move data from local vars to todo object
+                    toDo.item = item
+                    toDo.reminderIsOn = reminderIsOn
+                    toDo.dueDate = dueDate
+                    toDo.notes = notes
+                    toDo.isCompleted = isCompleted
+                    modelContext.insert(toDo)
+                    guard let _ = try? modelContext.save() else {
+                        print("😡 ERROR: Save on DetailView did not work. ")
+                        return
+                    }
+                    dismiss()
                 }
             }
         }
@@ -67,6 +88,7 @@ struct DetailView: View {
 
 #Preview {
     NavigationStack {
-        DetailView(toDo: "")
+        DetailView(toDo: ToDo())
+            .modelContainer(for: ToDo.self, inMemory: true)
     }
 }
